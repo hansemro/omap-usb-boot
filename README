@@ -1,0 +1,11 @@
+omap-usb-boot
+=============
+
+This tool implements USB communication with OMAP devices bootroms.
+
+In particular, it allows loading a file (to SRAM) for execution.
+
+The following platforms are supported by this tool:
+* OMAP3
+* OMAP4
+* OMAP5
