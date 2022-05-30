@@ -300,9 +300,12 @@ int main(int argc, char *argv[])
 				usleep(100);
 
 				if (context.completed) {
-					rc = boot_asic_id(&context);
-					if (rc < 0) {
-						fprintf(stderr, "Getting ASIC ID failed\n");
+					for (int i = 0; i < 10; i++) {
+						rc = boot_asic_id(&context);
+						if (rc < 0) {
+							fprintf(stderr, "Getting ASIC ID failed\n");
+						}
+						usleep(1000); // change to test different timing.
 					}
 					// wait until disconnected
 					while (1) {
