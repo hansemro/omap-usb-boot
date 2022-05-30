@@ -47,6 +47,7 @@ static int usage_print(void)
 	printf("Usage: omap-usb-boot [OPTIONS] [OPERATION]\n\n"
 		"Options:\n"
 		" -h                             help\n"
+		" -a                             print ASIC ID\n"
 		" -v                             verbose\n"
 		" -w                             wait for device\n\n"
 		"Operations:\n"
@@ -99,6 +100,11 @@ static int arguments_parse(struct context *context, int argc, char *argv[])
 				return -1;
 
 			context->operation = 'h';
+		} else if (strcmp(argv[i], "-a") == 0) {
+			if (context->operation)
+				return -1;
+
+			context->print_asic = 1;
 		} else if (strcmp(argv[i], "-v") == 0) {
 			context->verbose = 1;
 		} else if (strcmp(argv[i], "-w") == 0) {
@@ -242,10 +248,12 @@ int main(int argc, char *argv[])
 	if (rc < 0)
 		goto error;
 
-	rc = boot_asic_id(&context);
-	if (rc < 0) {
-		fprintf(stderr, "Getting ASIC ID failed\n");
-		return -1;
+	if (context.print_asic == 1) {
+		rc = boot_asic_id(&context);
+		if (rc < 0) {
+			fprintf(stderr, "Getting ASIC ID failed\n");
+			return -1;
+		}
 	}
 
 	switch (context.operation) {

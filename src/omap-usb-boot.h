@@ -50,6 +50,7 @@ struct context {
 	struct libusb_device_handle *usb_handle;
 	int verbose;
 	int wait;
+	int print_asic;
 	char operation;
 
 	char *device;
