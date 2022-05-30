@@ -245,6 +245,7 @@ int usb_send(struct context *context, const void *data, size_t size)
 		count += transferred;
 		p += transferred;
 	}
+	usleep(1000);
 
 	return 0;
 }
