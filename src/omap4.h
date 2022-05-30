@@ -46,14 +46,37 @@ struct omap4_asic_id_crc {
 	uint8_t subblock_id;
 	uint8_t subblock_size;
 	uint8_t fixed;
-	uint32_t crc;
-	uint32_t gp_blank;
+	uint32_t crc0;
+	uint32_t crc1;
+} __attribute__((__packed__));
+
+struct omap4_asic_id_reserved1 {
+	uint8_t subblock_id;
+	uint8_t subblock_size;
+	uint8_t fixed;
+	uint8_t data;
+} __attribute__((__packed__));
+
+struct omap4_asic_id_reserved2 {
+	uint8_t subblock_id;
+	uint8_t subblock_size;
+	uint8_t fixed;
+	uint8_t data[20];
+} __attribute__((__packed__));
+
+struct omap4_asic_id_reserved3 {
+	uint8_t subblock_id;
+	uint8_t subblock_size;
+	uint8_t fixed;
+	uint8_t data[32];
 } __attribute__((__packed__));
 
 struct omap4_asic_id {
 	uint8_t count;
 	struct omap4_asic_id_device_id device_id;
-	uint8_t reserved[62];
+	struct omap4_asic_id_reserved1 reserved1;
+	struct omap4_asic_id_reserved2 reserved2;
+	struct omap4_asic_id_reserved3 reserved3;
 	struct omap4_asic_id_crc crc;
 } __attribute__((__packed__));
 

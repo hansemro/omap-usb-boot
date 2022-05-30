@@ -63,8 +63,44 @@ int omap4_boot_asic_id(struct context *context)
 	if (rc < 0)
 		return -1;
 
-	if (context->verbose)
-		printf("ASIC device id: %04x, %s device\n", be16toh(asic_id.device_id.device), asic_id.crc.gp_blank == 0 ? "GP" : "HS");
+	printf("ASIC device id: %04x, %s device\n", be16toh(asic_id.device_id.device), asic_id.crc.crc1 == 0 ? "GP" : "HS");
+	if (context->verbose) {
+		printf("Number of subblocks: %u\n", asic_id.count);
+		printf("ID Subblock:\n");
+		printf("\tSubblock ID: 0x%02x\n", asic_id.device_id.subblock_id);
+		printf("\tSubblock size: 0x%02x\n", asic_id.device_id.subblock_size);
+		printf("\tFixed size: 0x%02x\n", asic_id.device_id.fixed);
+		printf("\tDevice: 0x%04x\n", be16toh(asic_id.device_id.device));
+		printf("\tCH: 0x%02x\n", asic_id.device_id.ch);
+		printf("\tROM revision: 0x%02x\n", asic_id.device_id.rom_revision);
+		printf("UNK1 Subblock:\n");
+		printf("\tSubblock ID: 0x%02x\n", asic_id.reserved1.subblock_id);
+		printf("\tSubblock size: 0x%02x\n", asic_id.reserved1.subblock_size);
+		printf("\tFixed size: 0x%02x\n", asic_id.reserved1.fixed);
+		printf("\tdata: 0x%02x\n", asic_id.reserved1.data);
+		printf("UNK2 Subblock:\n");
+		printf("\tSubblock ID: 0x%02x\n", asic_id.reserved2.subblock_id);
+		printf("\tSubblock size: 0x%02x\n", asic_id.reserved2.subblock_size);
+		printf("\tFixed size: 0x%02x\n", asic_id.reserved2.fixed);
+		printf("\tdata: 0x", asic_id.reserved2.data);
+		for (int i = 0; i < 20; i++) {
+			printf("%02x", asic_id.reserved2.data[20-i]);
+		}
+		printf("\nUNK3 Subblock:\n");
+		printf("\tSubblock ID: 0x%02x\n", asic_id.reserved3.subblock_id);
+		printf("\tSubblock size: 0x%02x\n", asic_id.reserved3.subblock_size);
+		printf("\tFixed size: 0x%02x\n", asic_id.reserved3.fixed);
+		printf("\tdata: 0x");
+		for (int i = 0; i < 32; i++) {
+			printf("%02x", asic_id.reserved3.data[32-i]);
+		}
+		printf("\nCRC Subblock:\n");
+		printf("\tSubblock ID: 0x%02x\n", asic_id.crc.subblock_id);
+		printf("\tSubblock size: 0x%02x\n", asic_id.crc.subblock_size);
+		printf("\tFixed size: 0x%02x\n", asic_id.crc.fixed);
+		printf("\tCRC0: 0x%08x\n", be32toh(asic_id.crc.crc0));
+		printf("\tCRC1: 0x%08x\n", be32toh(asic_id.crc.crc1));
+	}
 
 	return 0;
 }
