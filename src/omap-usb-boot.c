@@ -48,7 +48,8 @@ static int usage_print(void)
 		"Options:\n"
 		" -h                             help\n"
 		" -v                             verbose\n"
-		" -w                             wait for device\n\n"
+		" -w                             wait for device\n"
+		" -s                             stall and fetch asic id forever\n\n"
 		"Operations:\n"
 		" next                           skip to the next booting device\n"
 		" memory                         skip to the first memory booting device\n"
@@ -99,6 +100,8 @@ static int arguments_parse(struct context *context, int argc, char *argv[])
 				return -1;
 
 			context->operation = 'h';
+		} else if (strcmp(argv[i], "-s") == 0) {
+			context->operation = 's';
 		} else if (strcmp(argv[i], "-v") == 0) {
 			context->verbose = 1;
 		} else if (strcmp(argv[i], "-w") == 0) {
@@ -286,6 +289,29 @@ int main(int argc, char *argv[])
 			if (rc < 0) {
 				fprintf(stderr, "Loading and executing failed\n");
 				goto error;
+			}
+
+			break;
+		case 's':
+			printf("stalling...\n");
+
+			while (1) {
+				libusb_handle_events_completed(NULL, NULL);
+				usleep(100);
+
+				if (context.completed) {
+					rc = boot_asic_id(&context);
+					if (rc < 0) {
+						fprintf(stderr, "Getting ASIC ID failed\n");
+					}
+					// wait until disconnected
+					while (1) {
+						libusb_handle_events_completed(NULL, NULL);
+						if (context.completed == 0) {
+							break;
+						}
+					}
+				}
 			}
 
 			break;

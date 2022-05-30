@@ -25,11 +25,53 @@
 #include "omap-usb-boot.h"
 #include "usb.h"
 
+static int count = 0;
+
+int hotplug_callback(struct libusb_context *ctx, struct libusb_device *dev,
+			libusb_hotplug_event event, void *user_data)
+{
+	struct context *context = (struct context *)user_data;
+	struct libusb_device_descriptor desc;
+	int rc;
+
+	(void)libusb_get_device_descriptor(dev, &desc);
+
+	if (event == LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED) {
+		if (context->verbose) {
+			printf("hotplug count: %d\n", count);
+			printf("device plugged in to bus %d, port %d, addr %d\n",
+					libusb_get_bus_number(dev), libusb_get_port_number(dev),
+					libusb_get_device_address(dev));
+		}
+		rc = libusb_open(dev, &(context->usb_handle));
+		if (rc < 0) {
+			fprintf(stderr, "Could not open USB device\n");
+			goto error;
+		}
+		context->completed = 1;
+		count++;
+	} else if (event == LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT) {
+error:
+		if (context->verbose) {
+			printf("device unplugged\n");
+		}
+		if (context->usb_handle) {
+			libusb_close(context->usb_handle);
+			context->usb_handle = NULL;
+		}
+		context->completed = 0;
+	} else {
+		fprintf(stderr, "Unhandled event %d\n", event);
+	}
+	return 0;
+}
+
 int usb_open(struct context *context, struct omap_description **descriptions, size_t descriptions_count)
 {
 	struct libusb_device **list = NULL;
 	struct libusb_device_handle *handle = NULL;
 	struct libusb_device_descriptor descriptor;
+	libusb_hotplug_callback_handle hotplug_callback_handle;
 	int configuration;
 	char device_name[32];
 	size_t count;
@@ -99,6 +141,18 @@ usb_configure:
 		goto error;
 	}
 
+	if (context->verbose) {
+		printf("Registering hotplug callback for device %04x:%04x\n",
+				descriptor.idVendor, descriptor.idProduct);
+	}
+	rc = libusb_hotplug_register_callback(NULL, LIBUSB_HOTPLUG_EVENT_DEVICE_ARRIVED |
+					LIBUSB_HOTPLUG_EVENT_DEVICE_LEFT, 0, descriptor.idVendor,
+					descriptor.idProduct, LIBUSB_HOTPLUG_MATCH_ANY, hotplug_callback,
+					(void *)context, &hotplug_callback_handle);
+	if (rc < 0) {
+		fprintf(stderr, "Failed to register hotplug callback\n");
+	}
+
 	libusb_free_device_list(list, 1);
 	list = NULL;
 
@@ -159,6 +213,7 @@ void usb_close(struct context *context)
 
 int usb_send(struct context *context, const void *data, size_t size)
 {
+	libusb_device *dev = NULL;
 	size_t count;
 	size_t chunk;
 	uint8_t *p;
@@ -167,6 +222,13 @@ int usb_send(struct context *context, const void *data, size_t size)
 
 	if (context == NULL)
 		return -1;
+
+	dev = libusb_get_device(context->usb_handle);
+	if (context->verbose) {
+		printf("%s: usb bus %d, port %d, addr %d\n", __func__,
+				libusb_get_bus_number(dev), libusb_get_port_number(dev),
+				libusb_get_device_address(dev));
+	}
 
 	count = 0;
 	p = (uint8_t *) data;
